@@ -139,7 +139,7 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void startAnimation() {
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(500);
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(400);
         valueAnimator.setStartDelay(100);
         valueAnimator.start();
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {

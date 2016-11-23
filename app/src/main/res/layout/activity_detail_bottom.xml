@@ -47,7 +47,7 @@
         android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:textSize="16sp"
-        android:text="凡是得奖的用户，凡是得奖的用户凡是得奖的用户凡是得奖的用户凡是得奖的用户凡是得奖的用户凡是得奖的用户凡是得奖的用户"
+        android:text="我是详情，我是详情，我是详情，我是详情，我是详情，我是详情我是详情我是详情我是详情我是详情，我是详情，我是详情我是详情"
         android:textColor="@android:color/black"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"/>
@@ -58,5 +58,19 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
         android:src="@drawable/mv"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/hg"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/zy"/>
 
 </LinearLayout>

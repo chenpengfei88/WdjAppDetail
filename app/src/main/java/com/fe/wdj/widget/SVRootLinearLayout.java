@@ -169,7 +169,6 @@ public class SVRootLinearLayout extends LinearLayout {
             case MotionEvent.ACTION_MOVE:
                 float moveY = event.getY();
                 float yOffset = moveY - mInitY;
-              //  System.out.println("=========RootLinearLayout================ACTION_MOVE===========" + yOffset + "======t===" +mTouchSlop );
                 //拖动
                 if((mParentScrollView.getScrollY() <= 0 && moveY >= mInitY) || mIsDrag) {
                     setTouchMoveOffset(yOffset);
