@@ -137,7 +137,6 @@ public class SVRootLinearLayout extends LinearLayout {
 
     public void setTouchMoveOffset(float touchMoveOffset) {
         if(touchMoveOffset < 0) touchMoveOffset = 0;
-        System.out.println("===============touchMoveOffset====================" + touchMoveOffset);
         mTouchMoveOffset = (int) touchMoveOffset;
         requestLayout();
         updateBgColor(mTouchMoveOffset);
@@ -156,7 +155,6 @@ public class SVRootLinearLayout extends LinearLayout {
     public boolean onInterceptTouchEvent(MotionEvent event) {
         if(mParentScrollView == null) mParentScrollView = (ScrollView) getParent();
         mCenterVisibleViewHeight = mParentScrollView.getHeight() - mTitleViewHeight;
-        getParent().requestDisallowInterceptTouchEvent(true);
         return true;
     }
 
@@ -173,7 +171,7 @@ public class SVRootLinearLayout extends LinearLayout {
                 float yOffset = moveY - mInitY;
               //  System.out.println("=========RootLinearLayout================ACTION_MOVE===========" + yOffset + "======t===" +mTouchSlop );
                 //拖动
-                if((mParentScrollView.getScrollY() <= 0 && moveY > mInitY) || mIsDrag) {
+                if((mParentScrollView.getScrollY() <= 0 && moveY >= mInitY) || mIsDrag) {
                     setTouchMoveOffset(yOffset);
                     mIsDrag = true;
                     consumption = true;
