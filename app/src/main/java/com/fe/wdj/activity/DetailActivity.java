@@ -4,40 +4,51 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.WindowManager;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.fe.wdj.DisplayUtils;
+import com.fe.wdj.util.DisplayUtils;
 import com.fe.wdj.R;
-import widget.DetailScrollView;
-import widget.SVRootLinearLayout;
+import com.fe.wdj.widget.DetailScrollView;
+import com.fe.wdj.widget.SVRootLinearLayout;
 
+/**
+ * Created by chenpengfei on 2016/11/23.
+ */
 public class DetailActivity extends AppCompatActivity {
 
-    private SVRootLinearLayout mSVRootLl;
+
     private DetailScrollView mScrollView;
+
+    //ScrollView 底部的布局LinearLayout
+    private SVRootLinearLayout mSVRootLl;
+
+    //app图片和名字控件
     private ImageView mIconImageView;
-    private LinearLayout mContentLl;
-    private LinearLayout mBottomLl, mTitleLl;
     private TextView mAppNameTextView;
+
+    //中间内容布局，内容里的底部和顶部title布局
+    private LinearLayout mContentLl;
+    //内容里的底部和顶部title布局
+    private LinearLayout mBottomLl, mTitleLl;
+
+    //根布局的背景色
     private ColorDrawable mRootCDrawable;
+    private int mColorInitAlpha = 150;
 
     private int mContentTopOffsetNum;
     private int mContentBottomOffsetNum;
     private int mImageLeftOffsetNum;
     private int mImageTopOffsetNum;
-    private int mColorInitAlpha = 150;
 
-
+    //接收过来的参数
     private int mViewMarginTop;
     private int mImageId;
     private String mAppName;
@@ -51,13 +62,10 @@ public class DetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        setActionBar();
+        DisplayUtils.hideActionBar(getWindow());
         receiveParams();
         initView();
-        //设置初始化的位置
-        mSVRootLl.setContentInitMarginTop(mViewMarginTop);
-        mContentTopOffsetNum = mViewMarginTop - getResources().getDimensionPixelOffset(R.dimen.view_height);
-        startAnimation();
+        initAnimationData();
     }
 
     private void initView() {
@@ -71,6 +79,7 @@ public class DetailActivity extends AppCompatActivity {
         mSVRootLl = (SVRootLinearLayout) findViewById(R.id.ll_sv_root);
         mIconImageView = (ImageView) findViewById(R.id.imageview_icon);
         mIconImageView.setImageResource(mImageId);
+
         mContentLl = (LinearLayout) findViewById(R.id.ll_content);
         mBottomLl = (LinearLayout) findViewById(R.id.ll_bottom);
         mAppNameTextView = (TextView) findViewById(R.id.textview_appname);
@@ -79,6 +88,13 @@ public class DetailActivity extends AppCompatActivity {
 
         mImageTopOffsetNum = getResources().getDimensionPixelOffset(R.dimen.title_view_height);
 
+        //设置初始化的位置
+        mSVRootLl.setContentInitMarginTop(mViewMarginTop);
+        mContentTopOffsetNum = mViewMarginTop - getResources().getDimensionPixelOffset(R.dimen.view_height);
+
+        /**
+         *  activity 关闭回调
+         */
         mSVRootLl.setOnCloseListener(new SVRootLinearLayout.OnCloseListener() {
             @Override
             public void onClose() {
@@ -87,6 +103,9 @@ public class DetailActivity extends AppCompatActivity {
             }
         });
 
+        /**
+         *  下拉拖动时候回调修改root背景色的透明度
+         */
         mSVRootLl.setOnUpdateBgColorListener(new SVRootLinearLayout.OnUpdateBgColorListener() {
             @Override
             public void onUpdate(float ratio) {
@@ -102,21 +121,30 @@ public class DetailActivity extends AppCompatActivity {
         mAppName = intent.getStringExtra("appName");
     }
 
+    private void initAnimationData() {
+        mScrollView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if(!initData) {
+                    mContentBottomOffsetNum = mScrollView.getMeasuredHeight() - mContentLl.getBottom();
+                    mSVRootLl.setInitBottom(mContentLl.getBottom());
+                    mSVRootLl.setAnimationStatus(true);
+                    mSVRootLl.setLayoutImageView(true);
+                    mImageLeftOffsetNum = (DisplayUtils.getScreenWidth(DetailActivity.this) - mIconImageView.getWidth()) / 2 - getResources().getDimensionPixelOffset(R.dimen.icon_margin);
+                    initData = true;
+                    startAnimation();
+                }
+            }
+        });
+    }
+
     private void startAnimation() {
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(500);
-        valueAnimator.setStartDelay(200);
+        valueAnimator.setStartDelay(100);
         valueAnimator.start();
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                if(!initData) {
-                    mContentBottomOffsetNum = mScrollView.getMeasuredHeight() - mContentLl.getBottom();
-                    mSVRootLl.setInitBottom(mContentLl.getBottom());
-                    mSVRootLl.setIsAnimation(true);
-                    mSVRootLl.setLayoutImageView(true);
-                    mImageLeftOffsetNum = (DisplayUtils.getScreenWidth(DetailActivity.this) - mIconImageView.getWidth()) / 2 - getResources().getDimensionPixelOffset(R.dimen.icon_margin);
-                    initData = true;
-                }
                 float ratio = (float) animation.getAnimatedValue();
                 //内容布局顶部偏移量
                 int contentTopOffset = (int) (ratio * mContentTopOffsetNum);
@@ -126,7 +154,6 @@ public class DetailActivity extends AppCompatActivity {
                 int imageLeftOffset = (int) (ratio * mImageLeftOffsetNum);
                 //图片上边偏移量
                 int imageTopOffset =  (int) (ratio * mImageTopOffsetNum);
-
                 mSVRootLl.setAllViewOffset(mViewMarginTop - contentTopOffset, contentBottomOffset, imageLeftOffset, imageTopOffset);
             }
         });
@@ -135,25 +162,13 @@ public class DetailActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                mSVRootLl.setIsAnimation(false);
+                mSVRootLl.setAnimationStatus(false);
                 mBottomLl.setVisibility(View.VISIBLE);
                 mTitleLl.setVisibility(View.VISIBLE);
             }
         });
     }
 
-    private void setActionBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {//5.0及以上
-            View decorView = getWindow().getDecorView();
-            int option = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            decorView.setSystemUiVisibility(option);
-            getWindow().setStatusBarColor(Color.TRANSPARENT);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {//4.4到5.0
-            WindowManager.LayoutParams localLayoutParams = getWindow().getAttributes();
-            localLayoutParams.flags = (WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS | localLayoutParams.flags);
-        }
-    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {

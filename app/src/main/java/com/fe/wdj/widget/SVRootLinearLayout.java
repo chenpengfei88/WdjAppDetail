@@ -1,4 +1,4 @@
-package widget;
+package com.fe.wdj.widget;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -8,16 +8,13 @@ import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
-import com.fe.wdj.BigDecimalUtils;
+import com.fe.wdj.util.BigDecimalUtils;
 import com.fe.wdj.R;
-
-import java.math.BigDecimal;
 
 /**
  * Created by chenpengfei on 2016/11/22.
@@ -32,17 +29,21 @@ public class SVRootLinearLayout extends LinearLayout {
     private int mInitBottom;
     public int mContentMarginTop, mContentBottomOffset, mImageLeftOffset, mImageTopOffset, mTouchMoveOffset;
 
+
+    private ScrollView mParentScrollView;
+    private int mTitleViewHeight;
+    private int mCenterVisibleViewHeight;
+    private int mContentLlHeight, mContentLlWidth, mIconImageViewHeight, mIconImageViewWidth;
+
+    /**
+     *  拖拽
+     */
     private float mInitY;
     private int mTouchSlop;
     private boolean mIsDrag;
-
-    private ScrollView mParentScrollView;
-
     private OnCloseListener mOnCloseListener;
     private OnUpdateBgColorListener mOnUpdateBgColorListener;
 
-    private int mTitleViewHeight;
-    private int mCenterViewHeight;
 
     public void setOnCloseListener(OnCloseListener onCloseListener) {
         mOnCloseListener = onCloseListener;
@@ -75,16 +76,12 @@ public class SVRootLinearLayout extends LinearLayout {
             mInitBottom = bottom;
     }
 
-    public void setIsAnimation(boolean isAnimation) {
+    public void setAnimationStatus(boolean isAnimation) {
         mIsAnimation = isAnimation;
     }
 
     public void setLayoutImageView(boolean layoutImageView) {
         mIsLayoutImageView = layoutImageView;
-    }
-
-    public int getContentMarginTop() {
-        return mContentMarginTop;
     }
 
     @Override
@@ -98,13 +95,12 @@ public class SVRootLinearLayout extends LinearLayout {
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
         int contentTop = mContentMarginTop + mTouchMoveOffset;
-        mContentLL.layout(0, contentTop, mContentLL.getMeasuredWidth(),
-                !mIsAnimation ? contentTop + mContentLL.getMeasuredHeight() : mInitBottom + mContentBottomOffset);
+        mContentLL.layout(0, contentTop, mContentLlWidth, !mIsAnimation ? contentTop + mContentLlHeight : mInitBottom + mContentBottomOffset);
 
         if(!mIsLayoutImageView) return;
         int left = mMargin + mImageLeftOffset;
         int top = mMargin + mImageTopOffset;
-        mIconImageView.layout(left, top, left + mIconImageView.getMeasuredWidth(), top + mIconImageView.getMeasuredHeight());
+        mIconImageView.layout(left, top, left + mIconImageViewWidth, top + mIconImageViewHeight);
     }
 
     @Override
@@ -120,6 +116,10 @@ public class SVRootLinearLayout extends LinearLayout {
         }
 
         mTitleViewHeight = getChildAt(0).getMeasuredHeight();
+        mContentLlHeight = mContentLL.getMeasuredHeight();
+        mContentLlWidth = mContentLL.getMeasuredWidth();
+        mIconImageViewHeight = mIconImageView.getMeasuredHeight();
+        mIconImageViewWidth = mIconImageView.getMeasuredWidth();
     }
 
     public void setContentInitMarginTop(int marginTop) {
@@ -137,20 +137,25 @@ public class SVRootLinearLayout extends LinearLayout {
 
     public void setTouchMoveOffset(float touchMoveOffset) {
         if(touchMoveOffset < 0) touchMoveOffset = 0;
+        System.out.println("===============touchMoveOffset====================" + touchMoveOffset);
         mTouchMoveOffset = (int) touchMoveOffset;
         requestLayout();
         updateBgColor(mTouchMoveOffset);
     }
 
     public void updateBgColor(int offset) {
-        if(mOnUpdateBgColorListener != null) mOnUpdateBgColorListener.onUpdate(BigDecimalUtils.divide(offset, mCenterViewHeight));
+        if(mOnUpdateBgColorListener != null) {
+            float ratio = BigDecimalUtils.divide(offset, mCenterVisibleViewHeight);
+            if(ratio > 1) ratio = 1;
+            if(ratio < 0) ratio = 0;
+            mOnUpdateBgColorListener.onUpdate(ratio);
+        }
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if(mParentScrollView == null)
-            mParentScrollView = (ScrollView) getParent();
-        mCenterViewHeight = mParentScrollView.getHeight() - mTitleViewHeight;
+        if(mParentScrollView == null) mParentScrollView = (ScrollView) getParent();
+        mCenterVisibleViewHeight = mParentScrollView.getHeight() - mTitleViewHeight;
         getParent().requestDisallowInterceptTouchEvent(true);
         return true;
     }
@@ -161,19 +166,16 @@ public class SVRootLinearLayout extends LinearLayout {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mInitY = event.getY();
-                System.out.println("=========RootLinearLayout================ACTION_DOWN===========");
                 getParent().requestDisallowInterceptTouchEvent(true);
                 break;
             case MotionEvent.ACTION_MOVE:
                 float moveY = event.getY();
                 float yOffset = moveY - mInitY;
-                System.out.println("=========RootLinearLayout================ACTION_MOVE===========" + yOffset + "======t===" +mTouchSlop );
+              //  System.out.println("=========RootLinearLayout================ACTION_MOVE===========" + yOffset + "======t===" +mTouchSlop );
                 //拖动
                 if((mParentScrollView.getScrollY() <= 0 && moveY > mInitY) || mIsDrag) {
-                    if(Math.abs(yOffset) > mTouchSlop) {
-                        setTouchMoveOffset(yOffset);
-                        mIsDrag = true;
-                    }
+                    setTouchMoveOffset(yOffset);
+                    mIsDrag = true;
                     consumption = true;
                 } else {
                     getParent().requestDisallowInterceptTouchEvent(false);
@@ -184,7 +186,7 @@ public class SVRootLinearLayout extends LinearLayout {
                 mIsDrag = false;
                 boolean isUp = false;
                 int animationMoveOffset;
-                if(mContentLL.getTop() <= mCenterViewHeight / 2 + mTitleViewHeight) {
+                if(mContentLL.getTop() <= mCenterVisibleViewHeight / 2 + mTitleViewHeight) {
                     animationMoveOffset = mTouchMoveOffset;
                     isUp = true;
                 } else {

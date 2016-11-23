@@ -1,4 +1,4 @@
-package com.fe.wdj;
+package com.fe.wdj.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;

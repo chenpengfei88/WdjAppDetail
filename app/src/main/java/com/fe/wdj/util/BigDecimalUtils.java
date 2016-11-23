@@ -1,4 +1,4 @@
-package com.fe.wdj;
+package com.fe.wdj.util;
 
 import java.math.BigDecimal;
 
