@@ -72,6 +72,10 @@ public class SVRootLinearLayout extends LinearLayout {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
 
+    public int getCenterVisibleViewHeight() {
+        return  mCenterVisibleViewHeight;
+    }
+
     public void setInitBottom(int bottom) {
             mInitBottom = bottom;
     }
@@ -120,6 +124,9 @@ public class SVRootLinearLayout extends LinearLayout {
         mContentLlWidth = mContentLL.getMeasuredWidth();
         mIconImageViewHeight = mIconImageView.getMeasuredHeight();
         mIconImageViewWidth = mIconImageView.getMeasuredWidth();
+
+        if(mParentScrollView == null) mParentScrollView = (ScrollView) getParent();
+        mCenterVisibleViewHeight = mParentScrollView.getHeight() - mTitleViewHeight;
     }
 
     public void setContentInitMarginTop(int marginTop) {
@@ -153,8 +160,7 @@ public class SVRootLinearLayout extends LinearLayout {
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if(mParentScrollView == null) mParentScrollView = (ScrollView) getParent();
-        mCenterVisibleViewHeight = mParentScrollView.getHeight() - mTitleViewHeight;
+
         return true;
     }
 
@@ -195,9 +201,10 @@ public class SVRootLinearLayout extends LinearLayout {
         return consumption;
     }
 
-    private void startAnimation(final int moveOffset, final boolean isUp, final int currentMoveOffset) {
-        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(moveOffset / mTouchSlop * 10);
-        valueAnimator.start();
+    public void startAnimation(final int moveOffset, final boolean isUp, final int currentMoveOffset) {
+        int duration = moveOffset / mTouchSlop * 10;
+        if(duration <= 0) duration = 300;
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1).setDuration(duration);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -218,6 +225,7 @@ public class SVRootLinearLayout extends LinearLayout {
                 if(!isUp && mOnCloseListener != null) mOnCloseListener.onClose();
             }
         });
+        valueAnimator.start();
     }
 
     public interface OnCloseListener {

@@ -173,8 +173,7 @@ public class DetailActivity extends AppCompatActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) { //按下的如果是BACK，同时没有重复
-            finish();
-            overridePendingTransition(0, R.anim.activity_out);
+            if(mSVRootLl != null) mSVRootLl.startAnimation(mSVRootLl.getCenterVisibleViewHeight(), false, 0);
             return true;
         }
         return super.onKeyDown(keyCode, event);
